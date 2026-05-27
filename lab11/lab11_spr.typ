@@ -6,7 +6,7 @@
 #align(center)[#text(size: 17pt, weight: "bold")[MOwNiT - Laboratorium 11]]
 #align(center)[#text(size: 14pt, weight: "bold")[Optymalizacja]]
 #align(center)[Data: 20.05.2026]
-#align(center)[Autor: Hubert Kukla]
+#align(center)[Autorzy: Hubert Kukla, Maksymilian Siemek]
 
 = Cel ćwiczenia
 
@@ -51,7 +51,7 @@ $ V = 1/2 k sum_(i=0)^(n-1) (d_i-L)^2 + m g sum_(i=0)^n y_i $, gdzie $ d_i = sqr
 
 == Gradient funkcji celu
 
-Dla sprężyny między punktami $i$ i $i+1$ wkład do gradientu punktu $i$ ma postać $ k (d_i-L)/d_i vec(x_i-x_(i+1), y_i-y_(i+1)) $, a wkład do punktu $i+1$ ma przeciwny znak. Do każdej pochodnej po $y_j$ dochodzi dodatkowo składnik $mg$. W implementacji najpierw zsumowano wkłady wszystkich sprężyn, a następnie pozostawiono tylko współrzędne punktów wewnętrznych.
+Dla sprężyny między punktami $i$ i $i+1$ wkład do gradientu punktu $i$ ma postać $ k (d_i-L)/d_i vec(x_i-x_(i+1), y_i-y_(i+1)) $, a wkład do punktu $i+1$ ma przeciwny znak. Do każdej pochodnej po $y_j$ dochodzi dodatkowo składnik $m \cdot g$. W implementacji najpierw zsumowano wkłady wszystkich sprężyn, a następnie pozostawiono tylko współrzędne punktów wewnętrznych.
 
 == Podpunkt (a). Stały współczynnik uczenia
 
@@ -78,15 +78,17 @@ Zastosowano backtracking z warunkiem Armijo. Ta wersja sama dobiera krok i w tym
 
 == Wnioski do zadania 2
 
-1. Wszystkie trzy warianty prowadzą do praktycznie tej samej konfiguracji końcowej i energii około $-51.4583.
+1. Wszystkie trzy warianty prowadzą do praktycznie tej samej konfiguracji końcowej i energii około $-51.4583$.
 2. Najniższy punkt łańcucha ma współrzędną $y$ około $-4.059$, co jest zgodne z intuicją: łańcuch opada pod wpływem grawitacji.
 3. Przeszukiwanie liniowe jest najwygodniejsze, bo nie wymaga ręcznego strojenia stałego kroku i w tym uruchomieniu wykonało najmniej iteracji.
 
 = Zadanie 3. Predykcja roku wydania utworu
 
-Problem regresji zapisano jako minimalizację $ F(w)=1/(2m) || A w - y ||_2^2 $. Gradient ma postać $ nabla F(w)=1/m A^T(Aw-y) $. Stałą uczącą wyznaczono z wartości własnych macierzy $A^T A / m$: $ alpha = 2/(lambda_min + lambda_max) $.
+Problem regresji zapisano jako minimalizację $ F(w)=1/(2m) || A w - y ||_2^2 $. Gradient ma postać $ nabla F(w)=1/m A^T(A w-y) $. Stałą uczącą wyznaczono z wartości własnych macierzy $A^T A / m$: $ alpha = 2/(lambda_min + lambda_max) $.
 
-W katalogu roboczym nie było oryginalnego pliku z laboratorium 2, dlatego wyniki tabelaryczne pochodzą z trybu demonstracyjnego na danych syntetycznych o skorelowanych cechach. Notebook jest przygotowany tak, aby po dodaniu pliku `YearPredictionMSD.txt` albo zgodnego CSV automatycznie użył rzeczywistego zbioru. W tym uruchomieniu źródło danych to: #emph[dane syntetyczne - brak pliku z laboratorium 2], a macierz treningowa miała rozmiar 5000 x 21.
+Wykorzystano plik `YearPredictionMSD.txt` z laboratorium 2. Zbiór ma 515345 wierszy i 91 kolumn: pierwsza kolumna to rok wydania, a pozostałe 90 kolumn to cechy. Zgodnie z opisem danych pierwsze 463715 przykładów przyjęto jako zbiór treningowy, a pozostałe 51630 jako zbiór testowy. Po standaryzacji cech i dodaniu wyrazu wolnego macierz treningowa miała rozmiar 463715 x 91.
+
+Dla pełnego zbioru wygodnie jest utworzyć macierz Grama $H=A^T A / m$ oraz wektor $b=A^T y / m$. Wtedy gradient można liczyć jako $H w - b$, co jest równoważne klasycznemu gradientowi dla tej funkcji kwadratowej, ale po jednorazowym przygotowaniu macierzy nie wymaga mnożenia przez wszystkie wiersze danych w każdej iteracji. W tym uruchomieniu otrzymano $alpha=0.19210274$, $lambda_min=5.88753917 dot 10^(-2)$, $lambda_max=1.03522200 dot 10^1$ oraz $kappa(H) approx 175.83$.
 
 == Porównanie dokładności i czasu
 
@@ -94,10 +96,10 @@ W katalogu roboczym nie było oryginalnego pliku z laboratorium 2, dlatego wynik
   columns: (2.2fr, 1.2fr, 1.2fr, 1.1fr, 1fr),
   inset: 5pt,
   [Metoda], [RMSE test], [MAE test], [Czas s], [Iteracje],
-  [najmniejsze kwadraty], [8.1804], [6.6204], [0.0056], [1], [gradient prosty], [8.1803], [6.6204], [0.6606], [5000]
+  [najmniejsze kwadraty], [9.5102], [6.8005], [0.4199], [1], [gradient prosty], [9.5102], [6.8005], [0.4452], [1413]
 )
 
-#figure(image("lab11_figures/zad3_gd_convergence.png", width: 86%), caption: [Spadek funkcji celu podczas działania gradientu prostego.])
+#figure(image("lab11_figures/zad3_gd_convergence.png", width: 92%), caption: [Zbieżność gradientu prostego: wartość funkcji celu oraz norma gradientu z zaznaczoną tolerancją stopu.])
 
 #figure(image("lab11_figures/zad3_prediction_scatter.png", width: 70%), caption: [Porównanie wartości rzeczywistych i predykcji gradientu prostego.])
 
@@ -107,16 +109,19 @@ W katalogu roboczym nie było oryginalnego pliku z laboratorium 2, dlatego wynik
   columns: (1.7fr, 2fr, 2.5fr),
   inset: 5pt,
   [Metoda], [Koszt teoretyczny], [Komentarz],
-  [Najmniejsze kwadraty], [$O(m d^2 + d^3)$], [Koszt zależy głównie od faktoryzacji macierzy projektu. Dla małego $d$ jest bardzo szybka.],
-  [Gradient prosty], [$O(T m d)$], [Jedna iteracja jest tania, ale trzeba wykonać $T$ iteracji zależnych od uwarunkowania.]
+  [Najmniejsze kwadraty], [$O(m d^2 + d^3)$], [Koszt obejmuje utworzenie równań normalnych i rozwiązanie układu wymiaru $d$.],
+  [Gradient prosty], [$O(m d^2 + d^3 + T d^2)$], [W użytej wersji najpierw tworzono $H$ i wyznaczano wartości własne, a potem każda iteracja kosztowała $O(d^2)$. Bez macierzy Grama pojedyncza iteracja miałaby koszt $O(m d)$.]
 )
 
 == Wnioski do zadania 3
 
 1. Gradient prosty uzyskał praktycznie taki sam błąd testowy jak metoda najmniejszych kwadratów.
-2. Metoda najmniejszych kwadratów jest bezpośrednia i dla małej liczby cech zwykle wygrywa czasowo.
-3. Gradient prosty jest atrakcyjny dla bardzo dużych danych, ponieważ jedna iteracja wymaga tylko mnożeń przez $A$ i $A^T$.
-4. Dobór kroku z wartości własnych daje stabilną zbieżność bez ręcznego strojenia parametru uczenia.
+2. Błąd MAE około 6.8005 roku jest zgodny z wynikiem z laboratorium 2 dla metody najmniejszych kwadratów.
+3. Gradient prosty zatrzymał się po 1413 iteracjach, gdy norma gradientu spadła poniżej $10^(-7)$.
+4. Wykres wartości funkcji celu szybko dochodzi do poziomu minimalnego błędu regresji, dlatego po kilkudziesięciu iteracjach wygląda prawie płasko.
+5. Czytelniejszą miarą zatrzymania algorytmu jest norma gradientu. Jej prawie liniowy spadek na wykresie logarytmicznym jest oczekiwany dla funkcji kwadratowej i stałego optymalnego kroku: odpowiada geometrycznej, czyli wykładniczej, zbieżności błędu optymalizacji.
+6. Przy $d=91$ czas przygotowania macierzy $H$ dominuje nad samym rozwiązywaniem małego układu i nad iteracjami gradientu.
+7. Dobór kroku z wartości własnych daje stabilną zbieżność bez ręcznego strojenia parametru uczenia.
 
 = Wnioski końcowe
 
